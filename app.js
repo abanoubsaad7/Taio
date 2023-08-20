@@ -33,7 +33,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // const upload = multer()
 // mongoose
 const mongoose = require("mongoose");
-// mongoose.set('strictQuery', true);
+
 mongoose
   .connect(
     "mongodb+srv://AbanoubSaad:dev@cluster0.yoqimye.mongodb.net/knysa?retryWrites=true&w=majority"
@@ -109,7 +109,6 @@ app.post("/profile", function (req, res) {
     .catch((err) => {
       console.log(err);
     });
-
 });
 
 app.post('/login', function (req, res) {
@@ -117,7 +116,7 @@ app.post('/login', function (req, res) {
   const username = req.body.username;
    const password = req.body.password;
   
-  User.findOne({username:username ,password:password}, (err,user)=>{
+  User.findOne({username:username ,password:password}).then((user,err)=>{
    let errmsg ="the username or password is wrong"
     if(!err){
       if (user){
@@ -133,22 +132,22 @@ app.post('/login', function (req, res) {
     console.log(errmsg);
     res.redirect("/login");
     
-    
   })
 })
+  
 
 app.get("/profile", function(req,res){
   User.findById(UserInstance._id).then((result) => {
-    ProductUser.find({userID: UserInstance._id }).then(async(Data) => {
+    ProductUser.find({userID: UserInstance._id}).then(async(Data) => {
       let Allproduct = []
       let i ;
-      console.log('Data :>> ', Data);
+      console.log(Data)
       for(i=0;i<Data.length;i++) {
         let element = Data[i]
-        // console.log('element :>> ', element);
-        resultproducts = await Product.findOne(element.productID);
+        console.log(element)
+        let resultproducts = await Product.findOne(element.productID);
         Allproduct.push(resultproducts)
-        // console.log('Allproduct :>> ', Allproduct);
+        console.log(Allproduct);
       }
       res.render('profile',{myTitle:"profile" ,objuser:result ,products:Allproduct ,order:Data});
     })
@@ -252,7 +251,7 @@ app.get('/product/:id', (req, res) => {
       for(i=0;i<result.length;i++) {
         let element = result[i]
         console.log(element)
-        resultusers = await User.findOne(element.userID);
+       let resultusers = await User.findOne(element.userID);
         AllUsers.push(resultusers)
       }
       console.log(AllUsers)
@@ -286,7 +285,7 @@ app.get('/updateProduct/:id', (req, res) => {
 
 app.post('/Buy/:Id', (req, res) => {
   // console.log(UserInstance._id);
-  let Id = mongoose.Types.ObjectId(req.params.Id);
+  let Id = new mongoose.Types.ObjectId(req.params.Id);
   ProductUser.find({ userID: UserInstance._id, productID: Id }).then((result) => {
     if (result.length == 0) {
       const productUser = new ProductUser({
@@ -322,7 +321,7 @@ app.post('/mk-Admin/:id', function (req, res) {
 })
 
 app.get('/deleteOrder/:id', (req, res) => {
- ProductUser.findOne({productID:req.params.id}).then((result)=>{
+ ProductUser.findOne({productID:req.params.id,userID:UserInstance._id}).then((result)=>{
   res.render('delete-order',{order:result})
  })
 })
