@@ -53,8 +53,9 @@ p,td,h2,.lonbtn{
     margin: 2% 3%;
 }
 .lonbtn {
-    color: #556E53;
+    background-color: #556E53;
     border-color: #556E53;
+    color:white
 }
 
 .lonbtn:hover {
@@ -102,6 +103,9 @@ h2.product{
     width: 25%;
     height: fit-content;
 }
+.card-pro:hover {
+  box-shadow:1px 5px 7px 0 #152A38;
+}
 
 .card-item {
     width: fit-content;
@@ -115,7 +119,7 @@ label {
 #about {
     color: black;
     text-shadow: -1px 0 whitesmoke, 0 1px whitesmoke, 1px 0 whitesmoke, 0 -1px whitesmoke;
-    background-image: url(img/bg.jpg);
+    background-image: url(https://cdn.glitch.global/9ebcaba5-24b5-483c-85c8-19764a9452c1/bg.jpg?v=1675802291292);
     padding: 5% 3%;
     font-family: 'Marhey', cursive;
     background-position: center;
@@ -133,7 +137,7 @@ section#description,
     background-color:#D1D4C9;
 }
 #welcome{
-    background-image: url(img/Picsart_22-12-22_21-06-50-030.png);
+    background-image: url(https://cdn.glitch.global/9ebcaba5-24b5-483c-85c8-19764a9452c1/Picsart_22-12-22_21-06-50-030.png?v=1675802229424);
     padding: 5% 3%;
     font-family: 'Marhey', cursive;
     background-position: center;
@@ -167,7 +171,7 @@ footer{
     background-color: #152A38;
 }
 img.dis {
-    width: fit-content;
+    width: 70%;
     height: 30vw;
     border-radius: 30px;
     border-color: rgba(5, 26, 75, 0.934);
@@ -269,7 +273,7 @@ hr{
     #about {
         color: black;
         text-shadow: -1px 0 whitesmoke, 0 1px whitesmoke, 1px 0 whitesmoke, 0 -1px whitesmoke;
-        background-image: url(img/bg-sm.png);
+        background-image: url(https://cdn.glitch.global/9ebcaba5-24b5-483c-85c8-19764a9452c1/bg-sm.png?v=1675802272146);
         padding: 5% 3%;
         background-position: center;
         background-repeat: no-repeat;
