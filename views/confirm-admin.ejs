@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<%- include("partials/head") %>
+<center>
+<body>
+<h1> are you sure to make <%= objUser.username %> admin? </h1>
+<form action="/mk-Admin/<%= objUser._id %>" method="post">
+    <input class="btn lonbtn" type="submit" value="yes">
+</form>
+</body>
+</center>
+</html>
