@@ -36,7 +36,7 @@ const mongoose = require("mongoose");
 
 mongoose
   .connect(
-    "mongodb+srv://AbanoubSaad:dev@cluster0.yoqimye.mongodb.net/knysa?retryWrites=true&w=majority"
+    "mongodb+srv://AbanoubSaad:dev@cluster0.yoqimye.mongodb.net/taio?retryWrites=true&w=majority"
   )
   .then((result) => {
     app.listen(process.env.PORT || port, () => {
