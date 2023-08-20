@@ -19,7 +19,7 @@
        formData = new FormData();
        formData.append("proImg", photo);
        const data = await responce.json()
-        fetch('http://localhost:7500/productImage/'+data.Id, {
+        fetch('https://marigergese3dadi-taio.onrender.com/productImage/'+data.Id, {
         method: 'POST',
         body: formData
        }).then((data)=>{window.location.href = "/product-admin"})
