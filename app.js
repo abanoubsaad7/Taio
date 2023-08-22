@@ -164,10 +164,12 @@ app.post('/userImg/:id', function (req, res) {
     mv(oldpath, newpath , function(err) {
       if (err) throw err;
     });
-    User.updateOne({_id: req.params.id}, {img:req.params.id+type}, function (err, docs){
+    User.updateOne({_id: req.params.id}, {img:req.params.id+type}).then((result)=>{
       console.log("the product image was uploaded successfully");
       res.redirect("/profile");
-    });
+    }).catch((err)=>{
+      console.log('error :>> ', err);
+    })
 })
 })
 
@@ -197,10 +199,16 @@ app.post("/productImage/:Id", function (req, res) {
     mv(oldpath, newpath , function(err) {
       if (err) throw err;
     });
-    Product.updateOne({_id: req.params.Id}, {imgPath:req.params.Id+type}, function (err, docs){
-      console.log("the product image was uploaded successfully");
-      res.redirect("/product-admin");
-    });
+    Product.updateOne({_id: req.params.Id}, {imgPath:req.params.Id+type})
+  .then(result => {
+    console.log("The product image was uploaded successfully");
+    res.redirect("/product-admin");
+  })
+  .catch(error => {
+    // Handle the error appropriately
+    console.error(error);
+    res.status(500).send("An error occurred during the image upload.");
+  });
   });
 });
 
