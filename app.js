@@ -220,7 +220,7 @@ app.get("/profile",verifyToken, function(req,res){
     })
   })
 });
-app.post('/userImg/:id', function (req, res) {
+app.post('/userImg/:id',verifyToken, function (req, res) {
   const form = new formidable.IncomingForm();
 
   form.parse(req, function (err, fields, files) { 
@@ -255,7 +255,7 @@ app.post("/product",verifyToken, function (req, res) {
     });
 });
 
-app.post("/productImage/:Id", function (req, res) {
+app.post("/productImage/:Id",verifyToken, function (req, res) {
   const form = new formidable.IncomingForm();
   
   form.parse(req, function (err, fields, files) { 
@@ -358,7 +358,7 @@ app.get('/updateProduct/:id',verifyToken, (req, res) => {
   })
 })
 
-app.post('/Buy/:Id', (req, res) => {
+app.post('/Buy/:Id',verifyToken, (req, res) => {
   // console.log(req.user._id);
   let Id = new mongoose.Types.ObjectId(req.params.Id);
   ProductUser.find({ userID: req.user._id, productID: Id }).then((result) => {
@@ -385,7 +385,7 @@ app.post('/Buy/:Id', (req, res) => {
 
 
 
-app.post('/mk-Admin/:id', function (req, res) {
+app.post('/mk-Admin/:id',verifyToken, function (req, res) {
   User.findByIdAndUpdate({_id: req.params.id},{admin:true})
   .then((result)=>{
     res.redirect('/manage-users')
