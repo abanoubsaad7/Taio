@@ -18,7 +18,6 @@ const mv = require('mv');
 const path = require('path');
 // const util = require('util')
 // const EventEmitter = require('events')
-let UserInstance = null;
 // function MyClass() { EventEmitter.call(this) }
 // util.inherits(MyClass, EventEmitter)
 //body parser types
@@ -28,9 +27,19 @@ const urlencodedParser = bodyParser.urlencoded({ extended: true })
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
- //for uplouded files&images and multer set up
-// const multer  = require('multer')
-// const upload = multer()
+//token
+const jwt = require("jsonwebtoken");
+//session set up
+const session = require("express-session");
+
+app.use(
+  session({
+    secret: "marigerges-e3dadi-taio",
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+
 // mongoose
 const mongoose = require("mongoose");
 
@@ -48,6 +57,102 @@ mongoose
     console.log(err);
   });
   
+  // Generate JWT token
+const generateToken = (user) => {
+  const secretKey = "marigerges-e3dadi-taio"; // Replace with your own secret key
+  const payload = {
+    userId: user._id,
+    username: user.username,
+    // Include any additional data you want in the token payload
+  };
+  const options = {
+    expiresIn: "1h", // Token expiration time
+  };
+
+  return jwt.sign(payload, secretKey, options);
+};
+
+const verifyToken = (req, res, next) => {
+  const token = req.headers.authorization || req.session.token;
+
+  if (!token) {
+    return res.redirect('/login')
+  }
+
+  // Verify the token here
+  const secretKey = 'marigerges-e3dadi-taio'; // Replace with your own secret key
+
+  jwt.verify(token, secretKey, (err, decoded) => {
+    if (err) {
+      return res.status(401).send("Invalid token");
+    }
+
+    const userId = decoded.userId;
+
+    User.findById(userId)
+      .then((user) => {
+        if (!user) {
+          return res.status(401).send("Invalid token after decoded");
+        }
+
+        req.user = user;
+        next();
+      })
+      .catch((err) => {
+        console.error("Error verifying token:", err);
+        res.status(500).send("An error occurred while verifying the token");
+      });
+  });
+};
+
+app.post("/profile", function (req, res) {
+  const newUser = new User(req.body);
+
+  newUser
+    .save()
+    .then((result) => {
+      const token = generateToken(newUser);
+      req.session.token = token
+      res.redirect('/product') // Return the token as a JSON response
+      console.log('token :>> ', token);
+    
+    })
+    .catch((err) => {
+      console.error("Error registering user:", err);
+      res.status(500).send("An error occurred while registering the user");
+    });
+});
+
+app.post('/login', function (req, res) {
+
+  const username = req.body.username;
+  const password = req.body.password;
+
+  User.findOne({ username:username, password:password })
+    .then((user) => {
+      if (!user) {
+        return res.status(401).send("Invalid username or password");
+      }
+      if (user.admin == true){
+        const token = generateToken(user);
+      req.session.token = token
+      res.redirect('/product-admin') // Return the token as a JSON response
+      }else{
+        const token = generateToken(user);
+      req.session.token = token
+      res.redirect('/product') // Return the token as a JSON response
+      }
+
+      
+    })
+    .catch((err) => {
+      console.error("Error logging in:", err);
+      res.status(500).send("An error occurred while logging in");
+    });
+})
+  
+
+
 app.get("/", (req, res) => {
   res.redirect("/index");
 });
@@ -64,11 +169,11 @@ app.get("/login", (req, res) => {
   res.render("login", { myTitle: "log in" });
 });
 
-app.get("/add-new-pro", (req, res) => {
+app.get("/add-new-pro",verifyToken, (req, res) => {
   res.render("add-new-pro", { myTitle: "add new pro" });
 });
 
-app.get("/manage-users", (req, res) => {
+app.get("/manage-users",verifyToken, (req, res) => {
   User.find()
     .then((result) => {
       res.render("manage-users", { myTitle: " التحكم بالمستخدم  ",arrUser:result });
@@ -78,7 +183,7 @@ app.get("/manage-users", (req, res) => {
     });
 });
 
-app.get('/mkAdmin/:id', (req, res) => {
+app.get('/mkAdmin/:id',verifyToken, (req, res) => {
   User.findById(req.params.id)
   .then((result)=>{
     res.render('confirm-admin',{myTitle:"make admin",objUser:result})
@@ -88,7 +193,7 @@ app.get('/mkAdmin/:id', (req, res) => {
   })
 })
 
-app.get('/deleteUSer/:id', (req, res) => {
+app.get('/deleteUSer/:id',verifyToken, (req, res) => {
   User.findById(req.params.id)
   .then((result)=>{
     res.render('user-delete',{ myTitle:' مسح المستخدم ', objUser:result })
@@ -97,48 +202,10 @@ app.get('/deleteUSer/:id', (req, res) => {
     console.log(err);
   })
 })
-app.post("/profile", function (req, res) {
-  const newUser = new User(req.body);
 
-  newUser
-    .save()
-    .then((result) => {
-      res.redirect("/product");
-      UserInstance = newUser
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-});
-
-app.post('/login', function (req, res) {
-
-  const username = req.body.username;
-   const password = req.body.password;
-  
-  User.findOne({username:username ,password:password}).then((user,err)=>{
-   let errmsg ="the username or password is wrong"
-    if(!err){
-      if (user){
-        UserInstance = user;
-        if( user.admin == true){
-          res.redirect("/product-admin")
-          console.log("helloooooooz");
-        } else{
-          res.redirect("/product")
-        } return
-      }
-    }
-    console.log(errmsg);
-    res.redirect("/login");
-    
-  })
-})
-  
-
-app.get("/profile", function(req,res){
-  User.findById(UserInstance._id).then((result) => {
-    ProductUser.find({userID: UserInstance._id}).then(async(Data) => {
+app.get("/profile",verifyToken, function(req,res){
+  User.findById(req.user._id).then((result) => {
+    ProductUser.find({userID: req.user._id}).then(async(Data) => {
       let Allproduct = []
       let i ;
       console.log(Data)
@@ -175,7 +242,7 @@ app.post('/userImg/:id', function (req, res) {
 
 
 
-app.post("/product", function (req, res) {
+app.post("/product",verifyToken, function (req, res) {
   const product = new Product(req.body);
   product
     .save()
@@ -212,7 +279,7 @@ app.post("/productImage/:Id", function (req, res) {
   });
 });
 
-app.get("/product", (req, res) => {
+app.get("/product",verifyToken, (req, res) => {
   Product.find()
     .then((result) => {
       res.render("product", { myTitle: " الهدايا ",arrProduct:result });
@@ -222,7 +289,7 @@ app.get("/product", (req, res) => {
     });
 });
 
-app.get('/product-admin', (req, res) => {
+app.get('/product-admin',verifyToken, (req, res) => {
   Product.find()
   .then((result) => {
     res.render("product-admin", { myTitle: " products ",arrProduct:result });
@@ -232,7 +299,7 @@ app.get('/product-admin', (req, res) => {
   });
 })
 
-app.get("/manage", (req, res) => {
+app.get("/manage",verifyToken, (req, res) => {
   Product.find()
     .then((result) => {
       res.render("manage", { myTitle: " التحكم بالهدايا  ",arrProduct:result });
@@ -242,11 +309,11 @@ app.get("/manage", (req, res) => {
     });
 });
 
-app.get('/product/:id', (req, res) => {
+app.get('/product/:id',verifyToken, (req, res) => {
   Product.findById(req.params.id)
   .then((result)=>{
-    console.log(UserInstance)
-    if (UserInstance.admin == null || UserInstance.admin == false)
+    console.log(req.user)
+    if (req.user.admin == null || req.user.admin == false)
     {
       res.render('proDetails',{ myTitle:' تفاصيل الهدية ', objProduct:result});
       return
@@ -271,7 +338,7 @@ app.get('/product/:id', (req, res) => {
   })
 })
 
-app.get('/deleteProduct/:id', (req, res) => {
+app.get('/deleteProduct/:id',verifyToken, (req, res) => {
   Product.findById(req.params.id)
   .then((result)=>{
     res.render('product-delete',{ myTitle:' مسح الهدية ', objProduct:result })
@@ -281,7 +348,7 @@ app.get('/deleteProduct/:id', (req, res) => {
   })
 })
 
-app.get('/updateProduct/:id', (req, res) => {
+app.get('/updateProduct/:id',verifyToken, (req, res) => {
   Product.findByIdAndUpdate(req.params.id,req.body)
   .then((result)=>{
     res.render('update-product',{ myTitle:' تعديل الهدية ', objProduct:result })
@@ -292,12 +359,12 @@ app.get('/updateProduct/:id', (req, res) => {
 })
 
 app.post('/Buy/:Id', (req, res) => {
-  // console.log(UserInstance._id);
+  // console.log(req.user._id);
   let Id = new mongoose.Types.ObjectId(req.params.Id);
-  ProductUser.find({ userID: UserInstance._id, productID: Id }).then((result) => {
+  ProductUser.find({ userID: req.user._id, productID: Id }).then((result) => {
     if (result.length == 0) {
       const productUser = new ProductUser({
-        userID: UserInstance._id,
+        userID: req.user._id,
         productID: Id,
       });
       console.log(productUser);
@@ -328,31 +395,40 @@ app.post('/mk-Admin/:id', function (req, res) {
   })
 })
 
-app.get('/deleteOrder/:id', (req, res) => {
- ProductUser.findOne({productID:req.params.id,userID:UserInstance._id}).then((result)=>{
+app.get('/deleteOrder/:id',verifyToken, (req, res) => {
+ ProductUser.findOne({productID:req.params.id,userID:req.user._id}).then((result)=>{
   res.render('delete-order',{order:result})
  })
 })
 
-app.delete('/product/:id',  (req, res) => {
+app.delete('/product/:id',verifyToken,  (req, res) => {
   //eldata inside el json btt5zn fy var data inside details.ejs
   Product.findByIdAndDelete(req.params.id)
-      .then((params) => { res.json({ myLink: "/manage" }) })
+      .then((product) => {
+        ProductUser.deleteMany({productID:product._id}).then((result)=>{
+          res.json({ myLink: "/manage" }) 
+        })
+       })
       .catch((err) => {
           console.log(err);
       });
 });
 
-app.delete('/user/:id',  (req, res) => {
+
+app.delete('/user/:id',verifyToken,  (req, res) => {
   //eldata inside el json btt5zn fy var data inside details.ejs
   User.findByIdAndDelete(req.params.id)
-      .then((params) => { res.json({ myLink: "/manage-users" }) })
+      .then((user) => { 
+        ProductUser.deleteMany({userID:user._id}).then((result)=>{
+          res.json({ myLink: "/manage-users" })
+        })
+      })
       .catch((err) => {
           console.log(err);
       });
 });
 
-app.delete('/productUser/:id',  (req, res) => {
+app.delete('/productUser/:id',verifyToken,  (req, res) => {
   //eldata inside el json btt5zn fy var data inside details.ejs
   ProductUser.findByIdAndDelete(req.params.id)
       .then((params) => { res.json({ myLink: "/product" }) })
